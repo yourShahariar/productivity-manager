@@ -4,9 +4,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-here')
-    MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
-    MYSQL_USER = os.getenv('MYSQL_USER', 'root')
-    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
-    MYSQL_DB = os.getenv('MYSQL_DB', 'productivity_manager')
+    SECRET_KEY = os.getenv('IWishINeverExistedInThisShittyWorldEverydayIAmDyingFromInside', 'IWishINeverExistedInThisShittyWorldEverydayIAmDyingFromInside')
+    MYSQL_HOST = os.getenv('yourShahariar.mysql.pythonanywhere-services.com', 'localhost')
+    MYSQL_USER = os.getenv('yourShahariar', 'root')
+    MYSQL_PASSWORD = os.getenv('Aaajkiraat12#', '')
+    MYSQL_DB = os.getenv('yourShahariar$productivity_manager', 'productivity_manager')
     MYSQL_CURSORCLASS = 'DictCursor'
