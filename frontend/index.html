@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity & Task Manager for Tech Learners</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">Tech Productivity</h4>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-section="dashboard">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="tasks">
+                                <i class="bi bi-list-task me-2"></i>Tasks
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="sessions">
+                                <i class="bi bi-stopwatch me-2"></i>Sessions
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="resources">
+                                <i class="bi bi-collection me-2"></i>Resources
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="notes">
+                                <i class="bi bi-journal-text me-2"></i>Notes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="achievements">
+                                <i class="bi bi-trophy me-2"></i>Achievements
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="logs">
+                                <i class="bi bi-journal me-2"></i>Logs
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="mt-4 px-3">
+                        <button id="logout-btn" class="btn btn-outline-light w-100">
+                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Auth Section -->
+                <div id="auth-section" class="py-5">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card shadow">
+                                <div class="card-body p-4">
+                                    <h3 class="card-title text-center mb-4">Tech Productivity</h3>
+                                    <ul class="nav nav-tabs nav-justified mb-4" id="auth-tabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Login</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Register</button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content" id="auth-tabs-content">
+                                        <div class="tab-pane fade show active" id="login" role="tabpanel">
+                                            <form id="login-form">
+                                                <div class="mb-3">
+                                                    <label for="login-username" class="form-label">Username</label>
+                                                    <input type="text" class="form-control" id="login-username" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="login-password" class="form-label">Password</label>
+                                                    <input type="password" class="form-control" id="login-password" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary w-100">Login</button>
+                                            </form>
+                                        </div>
+                                        <div class="tab-pane fade" id="register" role="tabpanel">
+                                            <form id="register-form">
+                                                <div class="mb-3">
+                                                    <label for="register-username" class="form-label">Username</label>
+                                                    <input type="text" class="form-control" id="register-username" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="register-email" class="form-label">Email</label>
+                                                    <input type="email" class="form-control" id="register-email" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="register-password" class="form-label">Password</label>
+                                                    <input type="password" class="form-control" id="register-password" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="register-confirm-password" class="form-label">Confirm Password</label>
+                                                    <input type="password" class="form-control" id="register-confirm-password" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary w-100">Register</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- App Sections (initially hidden) -->
+                <div id="app-sections" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 id="section-title" class="h2">Dashboard</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary">Today</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary">Week</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Section -->
+                    <div id="dashboard-section" class="section-content">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5>Recent Tasks</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="recent-tasks" class="list-group"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5>Today's Sessions</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="today-sessions"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5>Recent Notes</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="recent-notes"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5>Mood Tracker</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="mood-chart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tasks Section -->
+                    <div id="tasks-section" class="section-content" style="display: none;">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h2>Tasks</h2>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-task-modal">
+                                <i class="bi bi-plus"></i> Add Task
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <ul class="nav nav-tabs" id="task-tabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="all-tasks-tab" data-bs-toggle="tab" data-bs-target="#all-tasks" type="button" role="tab">All</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="pending-tasks-tab" data-bs-toggle="tab" data-bs-target="#pending-tasks" type="button" role="tab">Pending</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="in-progress-tasks-tab" data-bs-toggle="tab" data-bs-target="#in-progress-tasks" type="button" role="tab">In Progress</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="completed-tasks-tab" data-bs-toggle="tab" data-bs-target="#completed-tasks" type="button" role="tab">Completed</button>
+                                </li>
+                            </ul>
+                            <div class="tab-content" id="task-tabs-content">
+                                <div class="tab-pane fade show active" id="all-tasks" role="tabpanel">
+                                    <div id="all-tasks-list" class="mt-3"></div>
+                                </div>
+                                <div class="tab-pane fade" id="pending-tasks" role="tabpanel">
+                                    <div id="pending-tasks-list" class="mt-3"></div>
+                                </div>
+                                <div class="tab-pane fade" id="in-progress-tasks" role="tabpanel">
+                                    <div id="in-progress-tasks-list" class="mt-3"></div>
+                                </div>
+                                <div class="tab-pane fade" id="completed-tasks" role="tabpanel">
+                                    <div id="completed-tasks-list" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sessions Section -->
+                    <div id="sessions-section" class="section-content" style="display: none;">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h2>Sessions</h2>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-session-modal">
+                                <i class="bi bi-plus"></i> Add Session
+                            </button>
+                        </div>
+                        <div id="sessions-list"></div>
+                    </div>
+
+                    <!-- Resources Section -->
+                    <div id="resources-section" class="section-content" style="display: none;">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h2>Resources</h2>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-resource-modal">
+                                <i class="bi bi-plus"></i> Add Resource
+                            </button>
+                        </div>
+                        <div class="row" id="resources-grid"></div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div id="notes-section" class="section-content" style="display: none;">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h2>Notes</h2>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-note-modal">
+                                <i class="bi bi-plus"></i> Add Note
+                            </button>
+                        </div>
+                        <div class="row" id="notes-grid"></div>
+                    </div>
+
+                    <!-- Achievements Section -->
+                    <div id="achievements-section" class="section-content" style="display: none;">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h2>Achievements</h2>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-achievement-modal">
+                                <i class="bi bi-plus"></i> Add Achievement
+                            </button>
+                        </div>
+                        <div class="row" id="achievements-grid"></div>
+                    </div>
+
+                    <!-- Logs Section -->
+                    <div id="logs-section" class="section-content" style="display: none;">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h2>Daily Logs</h2>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-log-modal">
+                                <i class="bi bi-plus"></i> Add Log
+                            </button>
+                        </div>
+                        <div id="logs-list"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Task Modal -->
+    <div class="modal fade" id="add-task-modal" tabindex="-1" aria-labelledby="add-task-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="add-task-modal-label">Add New Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-task-form">
+                        <div class="mb-3">
+                            <label for="task-title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="task-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="task-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="task-description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="task-category" class="form-label">Category</label>
+                            <select class="form-select" id="task-category" required>
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="task-deadline" class="form-label">Deadline</label>
+                            <input type="date" class="form-control" id="task-deadline">
+                        </div>
+                        <div class="mb-3">
+                            <label for="task-status" class="form-label">Status</label>
+                            <select class="form-select" id="task-status">
+                                <option value="pending">Pending</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="save-task-btn" class="btn btn-primary">Save Task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Session Modal -->
+    <div class="modal fade" id="add-session-modal" tabindex="-1" aria-labelledby="add-session-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="add-session-modal-label">Add New Session</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-session-form">
+                        <div class="mb-3">
+                            <label for="session-task" class="form-label">Task (optional)</label>
+                            <select class="form-select" id="session-task">
+                                <option value="">Select Task</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="session-date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="session-date" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="session-start-time" class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="session-start-time" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="session-end-time" class="form-label">End Time</label>
+                                <input type="time" class="form-control" id="session-end-time" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="session-notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="session-notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="save-session-btn" class="btn btn-primary">Save Session</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Resource Modal -->
+    <div class="modal fade" id="add-resource-modal" tabindex="-1" aria-labelledby="add-resource-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="add-resource-modal-label">Add New Resource</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-resource-form">
+                        <div class="mb-3">
+                            <label for="resource-title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="resource-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="resource-type" class="form-label">Type</label>
+                            <select class="form-select" id="resource-type" required>
+                                <option value="">Select Type</option>
+                                <option value="video">Video</option>
+                                <option value="article">Article</option>
+                                <option value="report">Report</option>
+                                <option value="tool">Tool</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="resource-url" class="form-label">URL</label>
+                            <input type="url" class="form-control" id="resource-url" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="resource-notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="resource-notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="save-resource-btn" class="btn btn-primary">Save Resource</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Note Modal -->
+    <div class="modal fade" id="add-note-modal" tabindex="-1" aria-labelledby="add-note-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="add-note-modal-label">Add New Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-note-form">
+                        <div class="mb-3">
+                            <label for="note-title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="note-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="note-content" class="form-label">Content</label>
+                            <textarea class="form-control" id="note-content" rows="5" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="save-note-btn" class="btn btn-primary">Save Note</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Achievement Modal -->
+    <div class="modal fade" id="add-achievement-modal" tabindex="-1" aria-labelledby="add-achievement-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="add-achievement-modal-label">Add New Achievement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-achievement-form">
+                        <div class="mb-3">
+                            <label for="achievement-title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="achievement-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="achievement-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="achievement-description" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="achievement-date" class="form-label">Date Achieved</label>
+                            <input type="date" class="form-control" id="achievement-date" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="save-achievement-btn" class="btn btn-primary">Save Achievement</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Log Modal -->
+    <div class="modal fade" id="add-log-modal" tabindex="-1" aria-labelledby="add-log-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="add-log-modal-label">Add Daily Log</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-log-form">
+                        <div class="mb-3">
+                            <label for="log-date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="log-date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="log-summary" class="form-label">Summary</label>
+                            <textarea class="form-control" id="log-summary" rows="5" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="log-mood" class="form-label">Mood</label>
+                            <select class="form-select" id="log-mood" required>
+                                <option value="">Select Mood</option>
+                                <option value="productive">Productive</option>
+                                <option value="tired">Tired</option>
+                                <option value="stuck">Stuck</option>
+                                <option value="flow">Flow</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="save-log-btn" class="btn btn-primary">Save Log</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div class="modal fade" id="edit-task-modal" tabindex="-1" aria-labelledby="edit-task-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="edit-task-modal-label">Edit Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-task-form">
+                        <input type="hidden" id="edit-task-id">
+                        <div class="mb-3">
+                            <label for="edit-task-title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="edit-task-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-task-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="edit-task-description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-task-category" class="form-label">Category</label>
+                            <select class="form-select" id="edit-task-category" required>
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-task-deadline" class="form-label">Deadline</label>
+                            <input type="date" class="form-control" id="edit-task-deadline">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-task-status" class="form-label">Status</label>
+                            <select class="form-select" id="edit-task-status">
+                                <option value="pending">Pending</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="update-task-btn" class="btn btn-primary">Update Task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/tasks.js"></script>
+    <script src="js/sessions.js"></script>
+    <script src="js/resources.js"></script>
+    <script src="js/notes.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/logs.js"></script>
+</body>
+</html>
