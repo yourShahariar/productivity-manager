@@ -6,8 +6,8 @@ import bcrypt
 import jwt
 import datetime
 
-app = Flask(__name__)
-CORS(app)
+app = Flask(__name__, static_folder='../frontend', static_url_path='/static')
+CORS(app, resources={r"/*": {"origins": "https://yourshahariar.pythonanywhere.com"}})
 app.config.from_object(Config)
 init_db(app)
 
@@ -18,10 +18,10 @@ def register():
     username = data['username']
     email = data['email']
     password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
-    
+
     cursor = db_connection()
     try:
-        cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", 
+        cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
                       (username, email, password))
         mysql.connection.commit()
         return jsonify({'message': 'User registered successfully'}), 201
@@ -33,19 +33,19 @@ def login():
     data = request.get_json()
     username = data['username']
     password = data['password']
-    
+
     cursor = db_connection()
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
-    
+
     if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
         token = jwt.encode({
             'user_id': user['id'],
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         }, app.config['SECRET_KEY'])
-        
+
         return jsonify({'token': token, 'user_id': user['id']})
-    
+
     return jsonify({'message': 'Invalid credentials'}), 401
 
 # Tasks Routes
@@ -54,9 +54,9 @@ def login():
 def get_tasks(current_user):
     cursor = db_connection()
     cursor.execute("""
-        SELECT t.*, c.name as category_name 
-        FROM tasks t 
-        LEFT JOIN categories c ON t.category_id = c.id 
+        SELECT t.*, c.name as category_name
+        FROM tasks t
+        LEFT JOIN categories c ON t.category_id = c.id
         WHERE t.user_id = %s
     """, (current_user['id'],))
     tasks = cursor.fetchall()
@@ -68,8 +68,8 @@ def add_task(current_user):
     data = request.get_json()
     cursor = db_connection()
     cursor.execute("""
-        INSERT INTO tasks 
-        (user_id, category_id, title, description, deadline, status) 
+        INSERT INTO tasks
+        (user_id, category_id, title, description, deadline, status)
         VALUES (%s, %s, %s, %s, %s, %s)
     """, (
         current_user['id'],
@@ -88,12 +88,12 @@ def update_task(current_user, task_id):
     data = request.get_json()
     cursor = db_connection()
     cursor.execute("""
-        UPDATE tasks SET 
-        title = %s, 
-        description = %s, 
-        category_id = %s, 
-        deadline = %s, 
-        status = %s 
+        UPDATE tasks SET
+        title = %s,
+        description = %s,
+        category_id = %s,
+        deadline = %s,
+        status = %s
         WHERE id = %s AND user_id = %s
     """, (
         data['title'],
@@ -139,8 +139,8 @@ def add_resource(current_user):
     data = request.get_json()
     cursor = db_connection()
     cursor.execute("""
-        INSERT INTO resources 
-        (user_id, title, type, url, notes) 
+        INSERT INTO resources
+        (user_id, title, type, url, notes)
         VALUES (%s, %s, %s, %s, %s)
     """, (
         current_user['id'],
@@ -158,9 +158,9 @@ def add_resource(current_user):
 def get_sessions(current_user):
     cursor = db_connection()
     cursor.execute("""
-        SELECT s.*, t.title as task_title 
-        FROM sessions s 
-        LEFT JOIN tasks t ON s.task_id = t.id 
+        SELECT s.*, t.title as task_title
+        FROM sessions s
+        LEFT JOIN tasks t ON s.task_id = t.id
         WHERE s.user_id = %s
     """, (current_user['id'],))
     sessions = cursor.fetchall()
@@ -172,8 +172,8 @@ def add_session(current_user):
     data = request.get_json()
     cursor = db_connection()
     cursor.execute("""
-        INSERT INTO sessions 
-        (user_id, task_id, session_date, start_time, end_time, duration_minutes, notes) 
+        INSERT INTO sessions
+        (user_id, task_id, session_date, start_time, end_time, duration_minutes, notes)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
     """, (
         current_user['id'],
@@ -202,8 +202,8 @@ def add_note(current_user):
     data = request.get_json()
     cursor = db_connection()
     cursor.execute("""
-        INSERT INTO notes 
-        (user_id, title, content) 
+        INSERT INTO notes
+        (user_id, title, content)
         VALUES (%s, %s, %s)
     """, (
         current_user['id'],
@@ -228,8 +228,8 @@ def add_achievement(current_user):
     data = request.get_json()
     cursor = db_connection()
     cursor.execute("""
-        INSERT INTO achievements 
-        (user_id, title, description, achieved_on) 
+        INSERT INTO achievements
+        (user_id, title, description, achieved_on)
         VALUES (%s, %s, %s, %s)
     """, (
         current_user['id'],
@@ -255,8 +255,8 @@ def add_log(current_user):
     data = request.get_json()
     cursor = db_connection()
     cursor.execute("""
-        INSERT INTO logs 
-        (user_id, log_date, summary, mood) 
+        INSERT INTO logs
+        (user_id, log_date, summary, mood)
         VALUES (%s, %s, %s, %s)
     """, (
         current_user['id'],
@@ -269,3 +269,15 @@ def add_log(current_user):
 
 if __name__ == '__main__':
     app.run(debug=True)
+@app.route('/')
+def serve_frontend():
+    return app.send_static_file('index.html')
+
+@app.route('/debug_db')
+def debug_db():
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT 1")
+        return "Database connection works!"
+    except Exception as e:
+        return f"Database connection failed: {str(e)}"
