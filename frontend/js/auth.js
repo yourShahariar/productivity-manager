@@ -2,21 +2,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
     const logoutBtn = document.getElementById('logout-btn');
-    
+
     // Check if user is already logged in
     const token = localStorage.getItem('token');
     if (token) {
         showApp();
     }
-    
+
     // Login form submission
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
-            
-            fetch('http://localhost:5000/login', {
+
+            fetch('https://yourshahariar.pythonanywhere.com/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
+
     // Register form submission
     if (registerForm) {
         registerForm.addEventListener('submit', function(e) {
@@ -48,13 +48,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
             const confirmPassword = document.getElementById('register-confirm-password').value;
-            
+
             if (password !== confirmPassword) {
                 alert('Passwords do not match');
                 return;
             }
-            
-            fetch('http://localhost:5000/register', {
+
+            fetch('https://yourshahariar.pythonanywhere.com/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
+
     // Logout button
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function() {
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showAuth();
         });
     }
-    
+
     // Navigation links
     document.querySelectorAll('[data-section]').forEach(link => {
         link.addEventListener('click', function(e) {
@@ -112,7 +112,7 @@ function showSection(section) {
     document.querySelectorAll('.section-content').forEach(el => {
         el.style.display = 'none';
     });
-    
+
     // Update title
     const titleMap = {
         'dashboard': 'Dashboard',
@@ -123,12 +123,12 @@ function showSection(section) {
         'achievements': 'Achievements',
         'logs': 'Daily Logs'
     };
-    
+
     document.getElementById('section-title').textContent = titleMap[section] || 'Dashboard';
-    
+
     // Show selected section
     document.getElementById(`${section}-section`).style.display = 'block';
-    
+
     // Load data for the section
     if (section === 'dashboard') {
         loadDashboard();
@@ -157,14 +157,14 @@ function getAuthHeader() {
 
 function loadDashboard() {
     // Load recent tasks
-    fetch('http://localhost:5000/tasks', {
+    fetch('https://yourshahariar.pythonanywhere.com/tasks', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(tasks => {
         const recentTasksContainer = document.getElementById('recent-tasks');
         recentTasksContainer.innerHTML = '';
-        
+
         const recentTasks = tasks.slice(0, 5);
         recentTasks.forEach(task => {
             const taskEl = document.createElement('a');
@@ -181,24 +181,24 @@ function loadDashboard() {
             recentTasksContainer.appendChild(taskEl);
         });
     });
-    
+
     // Load today's sessions
     const today = new Date().toISOString().split('T')[0];
-    fetch('http://localhost:5000/sessions', {
+    fetch('https://yourshahariar.pythonanywhere.com/sessions', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(sessions => {
         const todaySessionsContainer = document.getElementById('today-sessions');
         todaySessionsContainer.innerHTML = '';
-        
+
         const todaysSessions = sessions.filter(session => session.session_date === today);
-        
+
         if (todaysSessions.length === 0) {
             todaySessionsContainer.innerHTML = '<p>No sessions recorded today.</p>';
             return;
         }
-        
+
         todaysSessions.forEach(session => {
             const sessionEl = document.createElement('div');
             sessionEl.className = 'mb-3';
@@ -213,16 +213,16 @@ function loadDashboard() {
             todaySessionsContainer.appendChild(sessionEl);
         });
     });
-    
+
     // Load recent notes
-    fetch('http://localhost:5000/notes', {
+    fetch('https://yourshahariar.pythonanywhere.com/notes', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(notes => {
         const recentNotesContainer = document.getElementById('recent-notes');
         recentNotesContainer.innerHTML = '';
-        
+
         const recentNotes = notes.slice(0, 3);
         recentNotes.forEach(note => {
             const noteEl = document.createElement('div');
@@ -237,9 +237,9 @@ function loadDashboard() {
             recentNotesContainer.appendChild(noteEl);
         });
     });
-    
+
     // Load mood chart
-    fetch('http://localhost:5000/logs', {
+    fetch('https://yourshahariar.pythonanywhere.com/logs', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
@@ -250,13 +250,13 @@ function loadDashboard() {
             stuck: 0,
             flow: 0
         };
-        
+
         logs.forEach(log => {
             if (moodCounts.hasOwnProperty(log.mood)) {
                 moodCounts[log.mood]++;
             }
         });
-        
+
         const ctx = document.getElementById('mood-chart').getContext('2d');
         new Chart(ctx, {
             type: 'doughnut',
