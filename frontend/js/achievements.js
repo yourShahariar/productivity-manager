@@ -1,38 +1,38 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Load achievements when achievements section is shown
     document.querySelector('[data-section="achievements"]').addEventListener('click', loadAchievements);
-    
+
     // Add achievement button
     document.getElementById('save-achievement-btn').addEventListener('click', addAchievement);
-    
+
     // Set default date to today
     document.getElementById('achievement-date').value = new Date().toISOString().split('T')[0];
 });
 
 function loadAchievements() {
-    fetch('http://localhost:5000/achievements', {
+    fetch('https://yourshahariar.pythonanywhere.com/achievements', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(achievements => {
         const achievementsGrid = document.getElementById('achievements-grid');
         achievementsGrid.innerHTML = '';
-        
+
         if (achievements.length === 0) {
             achievementsGrid.innerHTML = '<div class="col-12"><div class="alert alert-info">No achievements added yet.</div></div>';
             return;
         }
-        
+
         // Sort achievements by date (newest first)
         achievements.sort((a, b) => new Date(b.achieved_on) - new Date(a.achieved_on));
-        
+
         achievements.forEach(achievement => {
             const achievementCol = document.createElement('div');
             achievementCol.className = 'col-md-6 col-lg-4';
-            
+
             const achievementCard = document.createElement('div');
             achievementCard.className = 'card achievement-card h-100';
-            
+
             achievementCard.innerHTML = `
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -50,10 +50,10 @@ function loadAchievements() {
                     </div>
                 </div>
             `;
-            
+
             achievementCol.appendChild(achievementCard);
             achievementsGrid.appendChild(achievementCol);
-            
+
             // Add event listener to delete button
             achievementCard.querySelector('.delete-achievement').addEventListener('click', function() {
                 deleteAchievement(this.getAttribute('data-id'));
@@ -66,8 +66,8 @@ function addAchievement() {
     const title = document.getElementById('achievement-title').value;
     const description = document.getElementById('achievement-description').value;
     const achievedOn = document.getElementById('achievement-date').value;
-    
-    fetch('http://localhost:5000/achievements', {
+
+    fetch('https://yourshahariar.pythonanywhere.com/achievements', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -82,7 +82,7 @@ function addAchievement() {
             // Close modal and reset form
             bootstrap.Modal.getInstance(document.getElementById('add-achievement-modal')).hide();
             document.getElementById('add-achievement-form').reset();
-            
+
             // Reload achievements
             loadAchievements();
         } else {
@@ -97,8 +97,8 @@ function addAchievement() {
 
 function deleteAchievement(achievementId) {
     if (!confirm('Are you sure you want to delete this achievement?')) return;
-    
-    fetch(`http://localhost:5000/achievements/${achievementId}`, {
+
+    fetch(`https://yourshahariar.pythonanywhere.com/achievements/${achievementId}`, {
         method: 'DELETE',
         headers: getAuthHeader()
     })
