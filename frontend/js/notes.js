@@ -1,32 +1,32 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Load notes when notes section is shown
     document.querySelector('[data-section="notes"]').addEventListener('click', loadNotes);
-    
+
     // Add note button
     document.getElementById('save-note-btn').addEventListener('click', addNote);
 });
 
 function loadNotes() {
-    fetch('http://localhost:5000/notes', {
+    fetch('https://yourshahariar.pythonanywhere.com/notes', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(notes => {
         const notesGrid = document.getElementById('notes-grid');
         notesGrid.innerHTML = '';
-        
+
         if (notes.length === 0) {
             notesGrid.innerHTML = '<div class="col-12"><div class="alert alert-info">No notes added yet.</div></div>';
             return;
         }
-        
+
         notes.forEach(note => {
             const noteCol = document.createElement('div');
             noteCol.className = 'col-md-6 col-lg-4';
-            
+
             const noteCard = document.createElement('div');
             noteCard.className = 'card note-card h-100';
-            
+
             noteCard.innerHTML = `
                 <div class="card-body">
                     <h5 class="card-title">${note.title}</h5>
@@ -46,15 +46,15 @@ function loadNotes() {
                     </div>
                 </div>
             `;
-            
+
             noteCol.appendChild(noteCard);
             notesGrid.appendChild(noteCol);
-            
+
             // Add event listeners to buttons
             noteCard.querySelector('.view-note').addEventListener('click', function() {
                 viewNote(this.getAttribute('data-id'));
             });
-            
+
             noteCard.querySelector('.delete-note').addEventListener('click', function() {
                 deleteNote(this.getAttribute('data-id'));
             });
@@ -63,14 +63,14 @@ function loadNotes() {
 }
 
 function viewNote(noteId) {
-    fetch(`http://localhost:5000/notes/${noteId}`, {
+    fetch(`https://yourshahariar.pythonanywhere.com/notes/${noteId}`, {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(note => {
         // Find the note in the array (response might be an array)
         const noteData = Array.isArray(note) ? note.find(n => n.id == noteId) : note;
-        
+
         // Show note in a modal
         const modal = new bootstrap.Modal(document.createElement('div'));
         modal._element.className = 'modal fade';
@@ -90,10 +90,10 @@ function viewNote(noteId) {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(modal._element);
         modal.show();
-        
+
         // Remove modal from DOM after it's hidden
         modal._element.addEventListener('hidden.bs.modal', function() {
             document.body.removeChild(modal._element);
@@ -108,8 +108,8 @@ function viewNote(noteId) {
 function addNote() {
     const title = document.getElementById('note-title').value;
     const content = document.getElementById('note-content').value;
-    
-    fetch('http://localhost:5000/notes', {
+
+    fetch('https://yourshahariar.pythonanywhere.com/notes', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -123,7 +123,7 @@ function addNote() {
             // Close modal and reset form
             bootstrap.Modal.getInstance(document.getElementById('add-note-modal')).hide();
             document.getElementById('add-note-form').reset();
-            
+
             // Reload notes
             loadNotes();
         } else {
@@ -138,8 +138,8 @@ function addNote() {
 
 function deleteNote(noteId) {
     if (!confirm('Are you sure you want to delete this note?')) return;
-    
-    fetch(`http://localhost:5000/notes/${noteId}`, {
+
+    fetch(`https://yourshahariar.pythonanywhere.com/notes/${noteId}`, {
         method: 'DELETE',
         headers: getAuthHeader()
     })
