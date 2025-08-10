@@ -1,39 +1,39 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Load resources when resources section is shown
     document.querySelector('[data-section="resources"]').addEventListener('click', loadResources);
-    
+
     // Add resource button
     document.getElementById('save-resource-btn').addEventListener('click', addResource);
 });
 
 function loadResources() {
-    fetch('http://localhost:5000/resources', {
+    fetch('https://yourshahariar.pythonanywhere.com/resources', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(resources => {
         const resourcesGrid = document.getElementById('resources-grid');
         resourcesGrid.innerHTML = '';
-        
+
         if (resources.length === 0) {
             resourcesGrid.innerHTML = '<div class="col-12"><div class="alert alert-info">No resources added yet.</div></div>';
             return;
         }
-        
+
         resources.forEach(resource => {
             const resourceCol = document.createElement('div');
             resourceCol.className = 'col-md-6 col-lg-4';
-            
+
             const resourceCard = document.createElement('div');
             resourceCard.className = 'card resource-card h-100';
-            
+
             // Icon based on type
             let icon = 'bi-link';
             if (resource.type === 'video') icon = 'bi-play-circle';
             if (resource.type === 'article') icon = 'bi-newspaper';
             if (resource.type === 'report') icon = 'bi-file-earmark-text';
             if (resource.type === 'tool') icon = 'bi-tools';
-            
+
             resourceCard.innerHTML = `
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -53,10 +53,10 @@ function loadResources() {
                     </div>
                 </div>
             `;
-            
+
             resourceCol.appendChild(resourceCard);
             resourcesGrid.appendChild(resourceCol);
-            
+
             // Add event listener to delete button
             resourceCard.querySelector('.delete-resource').addEventListener('click', function() {
                 deleteResource(this.getAttribute('data-id'));
@@ -70,8 +70,8 @@ function addResource() {
     const type = document.getElementById('resource-type').value;
     const url = document.getElementById('resource-url').value;
     const notes = document.getElementById('resource-notes').value;
-    
-    fetch('http://localhost:5000/resources', {
+
+    fetch('https://yourshahariar.pythonanywhere.com/resources', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -87,7 +87,7 @@ function addResource() {
             // Close modal and reset form
             bootstrap.Modal.getInstance(document.getElementById('add-resource-modal')).hide();
             document.getElementById('add-resource-form').reset();
-            
+
             // Reload resources
             loadResources();
         } else {
@@ -102,8 +102,8 @@ function addResource() {
 
 function deleteResource(resourceId) {
     if (!confirm('Are you sure you want to delete this resource?')) return;
-    
-    fetch(`http://localhost:5000/resources/${resourceId}`, {
+
+    fetch(`https://yourshahariar.pythonanywhere.com/resources/${resourceId}`, {
         method: 'DELETE',
         headers: getAuthHeader()
     })
