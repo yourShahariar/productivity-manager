@@ -1,19 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Load tasks when tasks section is shown
     document.querySelector('[data-section="tasks"]').addEventListener('click', loadTasks);
-    
+
     // Add task button
     document.getElementById('save-task-btn').addEventListener('click', addTask);
-    
+
     // Update task button
     document.getElementById('update-task-btn').addEventListener('click', updateTask);
-    
+
     // Load categories for task forms
     loadCategories();
 });
 
 function loadTasks() {
-    fetch('http://localhost:5000/tasks', {
+    fetch('https://yourshahariar.pythonanywhere.com/tasks', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
@@ -23,7 +23,7 @@ function loadTasks() {
         document.getElementById('pending-tasks-list').innerHTML = '';
         document.getElementById('in-progress-tasks-list').innerHTML = '';
         document.getElementById('completed-tasks-list').innerHTML = '';
-        
+
         if (tasks.length === 0) {
             const noTasks = document.createElement('div');
             noTasks.className = 'alert alert-info';
@@ -31,13 +31,13 @@ function loadTasks() {
             document.getElementById('all-tasks-list').appendChild(noTasks);
             return;
         }
-        
+
         tasks.forEach(task => {
             const taskCard = createTaskCard(task);
-            
+
             // Add to all tasks list
             document.getElementById('all-tasks-list').appendChild(taskCard.cloneNode(true));
-            
+
             // Add to status-specific list
             if (task.status === 'pending') {
                 document.getElementById('pending-tasks-list').appendChild(taskCard.cloneNode(true));
@@ -53,15 +53,15 @@ function loadTasks() {
 function createTaskCard(task) {
     const taskCard = document.createElement('div');
     taskCard.className = 'card task-card mb-3';
-    
+
     // Status badge color
     let badgeClass = 'bg-secondary';
     if (task.status === 'in_progress') badgeClass = 'bg-warning';
     if (task.status === 'completed') badgeClass = 'bg-success';
-    
+
     // Format deadline
     const deadline = task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline';
-    
+
     taskCard.innerHTML = `
         <div class="card-body">
             <div class="d-flex justify-content-between">
@@ -78,37 +78,37 @@ function createTaskCard(task) {
             </div>
         </div>
     `;
-    
+
     // Add event listeners to buttons
     taskCard.querySelector('.edit-task').addEventListener('click', function() {
         editTask(this.getAttribute('data-id'));
     });
-    
+
     taskCard.querySelector('.delete-task').addEventListener('click', function() {
         deleteTask(this.getAttribute('data-id'));
     });
-    
+
     return taskCard;
 }
 
 function loadCategories() {
-    fetch('http://localhost:5000/categories', {
+    fetch('https://yourshahariar.pythonanywhere.com/categories', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(categories => {
         const taskCategorySelect = document.getElementById('task-category');
         const editTaskCategorySelect = document.getElementById('edit-task-category');
-        
+
         // Clear existing options
         taskCategorySelect.innerHTML = '<option value="">Select Category</option>';
         editTaskCategorySelect.innerHTML = '<option value="">Select Category</option>';
-        
+
         categories.forEach(category => {
             const option = document.createElement('option');
             option.value = category.id;
             option.textContent = category.name;
-            
+
             taskCategorySelect.appendChild(option.cloneNode(true));
             editTaskCategorySelect.appendChild(option);
         });
@@ -121,8 +121,8 @@ function addTask() {
     const categoryId = document.getElementById('task-category').value;
     const deadline = document.getElementById('task-deadline').value;
     const status = document.getElementById('task-status').value;
-    
-    fetch('http://localhost:5000/tasks', {
+
+    fetch('https://yourshahariar.pythonanywhere.com/tasks', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -139,7 +139,7 @@ function addTask() {
             // Close modal and reset form
             bootstrap.Modal.getInstance(document.getElementById('add-task-modal')).hide();
             document.getElementById('add-task-form').reset();
-            
+
             // Reload tasks
             loadTasks();
         } else {
@@ -153,14 +153,14 @@ function addTask() {
 }
 
 function editTask(taskId) {
-    fetch(`http://localhost:5000/tasks/${taskId}`, {
+    fetch(`https://yourshahariar.pythonanywhere.com/tasks/${taskId}`, {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(task => {
         // Find the task in the array (response might be an array)
         const taskData = Array.isArray(task) ? task.find(t => t.id == taskId) : task;
-        
+
         // Populate edit form
         document.getElementById('edit-task-id').value = taskId;
         document.getElementById('edit-task-title').value = taskData.title;
@@ -168,7 +168,7 @@ function editTask(taskId) {
         document.getElementById('edit-task-category').value = taskData.category_id || '';
         document.getElementById('edit-task-deadline').value = taskData.deadline || '';
         document.getElementById('edit-task-status').value = taskData.status;
-        
+
         // Show edit modal
         new bootstrap.Modal(document.getElementById('edit-task-modal')).show();
     })
@@ -185,8 +185,8 @@ function updateTask() {
     const categoryId = document.getElementById('edit-task-category').value;
     const deadline = document.getElementById('edit-task-deadline').value;
     const status = document.getElementById('edit-task-status').value;
-    
-    fetch(`http://localhost:5000/tasks/${taskId}`, {
+
+    fetch(`https://yourshahariar.pythonanywhere.com/tasks/${taskId}`, {
         method: 'PUT',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -203,7 +203,7 @@ function updateTask() {
             // Close modal and reset form
             bootstrap.Modal.getInstance(document.getElementById('edit-task-modal')).hide();
             document.getElementById('edit-task-form').reset();
-            
+
             // Reload tasks
             loadTasks();
         } else {
@@ -218,8 +218,8 @@ function updateTask() {
 
 function deleteTask(taskId) {
     if (!confirm('Are you sure you want to delete this task?')) return;
-    
-    fetch(`http://localhost:5000/tasks/${taskId}`, {
+
+    fetch(`https://yourshahariar.pythonanywhere.com/tasks/${taskId}`, {
         method: 'DELETE',
         headers: getAuthHeader()
     })
