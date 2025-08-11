@@ -17,7 +17,8 @@ def register():
     data = request.get_json()
     username = data['username']
     email = data['email']
-    password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
+    # hash password and decode bytes to str
+    password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
     cursor = db_connection()
     try:
@@ -28,25 +29,52 @@ def register():
     except Exception as e:
         return jsonify({'message': str(e)}), 400
 
+
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    username = data['username']
-    password = data['password']
+    if not data:
+        return jsonify({'message': 'Invalid request, JSON data required'}), 400
 
-    cursor = db_connection()
-    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-    user = cursor.fetchone()
+    username = data.get('username')
+    password = data.get('password')
+    if not username or not password:
+        return jsonify({'message': 'Username and password required'}), 400
 
-    if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-        token = jwt.encode({
-            'user_id': user['id'],
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-        }, app.config['SECRET_KEY'])
+    try:
+        cursor = db_connection()
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+    except Exception as e:
+        return jsonify({'message': 'Database error', 'error': str(e)}), 500
 
-        return jsonify({'token': token, 'user_id': user['id']})
+    if not user:
+        return jsonify({'message': 'Invalid credentials'}), 401
 
-    return jsonify({'message': 'Invalid credentials'}), 401
+    stored_password = user['password']
+    try:
+        if isinstance(stored_password, bytes):
+            password_matches = bcrypt.checkpw(password.encode('utf-8'), stored_password)
+        else:
+            password_matches = bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8'))
+    except Exception as e:
+        return jsonify({'message': 'Password verification error', 'error': str(e)}), 500
+
+    if not password_matches:
+        return jsonify({'message': 'Invalid credentials'}), 401
+
+    token = jwt.encode({
+        'user_id': user['id'],
+        'exp': datetime.utcnow() + timedelta(hours=24)
+    }, app.config['SECRET_KEY'])
+
+    if isinstance(token, bytes):
+        token = token.decode('utf-8')
+
+    return jsonify({'token': token, 'user_id': user['id']})
+
+
+
 
 # Tasks Routes
 @app.route('/tasks', methods=['GET'])
@@ -61,6 +89,22 @@ def get_tasks(current_user):
     """, (current_user['id'],))
     tasks = cursor.fetchall()
     return jsonify(tasks)
+
+@app.route('/tasks/<int:task_id>', methods=['GET'])
+@token_required
+def get_task(current_user, task_id):
+    cursor = db_connection()
+    cursor.execute("""
+        SELECT t.*, c.name as category_name
+        FROM tasks t
+        LEFT JOIN categories c ON t.category_id = c.id
+        WHERE t.id = %s AND t.user_id = %s
+    """, (task_id, current_user['id']))
+    task = cursor.fetchone()
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+    return jsonify(task)
+
 
 @app.route('/tasks', methods=['POST'])
 @token_required
@@ -110,10 +154,20 @@ def update_task(current_user, task_id):
 @app.route('/tasks/<int:task_id>', methods=['DELETE'])
 @token_required
 def delete_task(current_user, task_id):
-    cursor = db_connection()
-    cursor.execute("DELETE FROM tasks WHERE id = %s AND user_id = %s", (task_id, current_user['id']))
-    mysql.connection.commit()
-    return jsonify({'message': 'Task deleted successfully'})
+    try:
+        cursor = db_connection()
+        print(f"Cursor object: {cursor}")  # Check if cursor is not None or invalid
+        print(f"Deleting task id={task_id} for user id={current_user['id']}")
+
+        cursor.execute("DELETE FROM tasks WHERE id = %s AND user_id = %s", (task_id, current_user['id']))
+        mysql.connection.commit()
+        print("Delete query executed successfully")
+        return jsonify({'message': 'Task deleted successfully'})
+    except Exception as e:
+        print("Delete task error:", e)
+        return jsonify({'message': 'Failed to delete task', 'error': str(e)}), 500
+
+
 
 # Categories Routes
 @app.route('/categories', methods=['GET'])
@@ -152,7 +206,22 @@ def add_resource(current_user):
     mysql.connection.commit()
     return jsonify({'message': 'Resource added successfully'}), 201
 
+@app.route('/resources/<int:resource_id>', methods=['DELETE'])
+@token_required
+def delete_resource(current_user, resource_id):
+    cursor = db_connection()
+    cursor.execute("DELETE FROM resources WHERE id = %s AND user_id = %s", (resource_id, current_user['id']))
+    mysql.connection.commit()
+
+    if cursor.rowcount == 0:
+        return jsonify({'message': 'Resource not found'}), 404
+
+    return jsonify({'message': 'Resource deleted successfully'}), 200
+
+
 # Sessions Routes
+from datetime import timedelta, date, time, datetime
+
 @app.route('/sessions', methods=['GET'])
 @token_required
 def get_sessions(current_user):
@@ -164,7 +233,24 @@ def get_sessions(current_user):
         WHERE s.user_id = %s
     """, (current_user['id'],))
     sessions = cursor.fetchall()
-    return jsonify(sessions)
+
+    serialized_sessions = []
+    for session in sessions:
+        session_dict = dict(session)  # Assumes cursor returns dict-like rows
+
+        # Convert any non-serializable fields to JSON-friendly format
+        for key, value in session_dict.items():
+            if isinstance(value, timedelta):
+                session_dict[key] = int(value.total_seconds() / 60)  # Convert timedelta to minutes (int)
+            elif isinstance(value, (date, time, datetime)):
+                session_dict[key] = value.isoformat()
+            elif value is None and key == 'duration_minutes':
+                session_dict[key] = 0  # Avoid null duration
+
+        serialized_sessions.append(session_dict)
+
+    return jsonify(serialized_sessions)
+
 
 @app.route('/sessions', methods=['POST'])
 @token_required
@@ -186,6 +272,17 @@ def add_session(current_user):
     ))
     mysql.connection.commit()
     return jsonify({'message': 'Session added successfully'}), 201
+
+@app.route('/sessions/<int:session_id>', methods=['DELETE'])
+@token_required
+def delete_session(current_user, session_id):
+    cursor = db_connection()
+    cursor.execute("DELETE FROM sessions WHERE id = %s AND user_id = %s", (session_id, current_user['id']))
+    mysql.connection.commit()
+    if cursor.rowcount == 0:
+        return jsonify({'message': 'Session not found or not authorized'}), 404
+    return jsonify({'message': 'Session deleted successfully'})
+
 
 # Notes Routes
 @app.route('/notes', methods=['GET'])
@@ -212,6 +309,55 @@ def add_note(current_user):
     ))
     mysql.connection.commit()
     return jsonify({'message': 'Note added successfully'}), 201
+
+@app.route('/notes/<int:note_id>', methods=['PUT'])
+@token_required
+def update_note(current_user, note_id):
+    data = request.get_json()
+    cursor = db_connection()
+    cursor.execute("""
+        UPDATE notes SET
+        title = %s,
+        content = %s
+        WHERE id = %s AND user_id = %s
+    """, (
+        data.get('title'),
+        data.get('content'),
+        note_id,
+        current_user['id']
+    ))
+    mysql.connection.commit()
+
+    if cursor.rowcount == 0:
+        return jsonify({'message': 'Note not found or not authorized'}), 404
+
+    return jsonify({'message': 'Note updated successfully'})
+
+@app.route('/notes/<int:note_id>', methods=['DELETE'])
+@token_required
+def delete_note(current_user, note_id):
+    cursor = db_connection()
+    cursor.execute("DELETE FROM notes WHERE id = %s AND user_id = %s", (note_id, current_user['id']))
+    mysql.connection.commit()
+
+    if cursor.rowcount == 0:
+        return jsonify({'message': 'Note not found or not authorized'}), 404
+
+    return jsonify({'message': 'Note deleted successfully'})
+
+@app.route('/notes/<int:note_id>', methods=['GET'])
+@token_required
+def get_note(current_user, note_id):
+    cursor = db_connection()
+    cursor.execute("SELECT * FROM notes WHERE id = %s AND user_id = %s", (note_id, current_user['id']))
+    note = cursor.fetchone()
+
+    if note is None:
+        return jsonify({'message': 'Note not found'}), 404
+
+    return jsonify(dict(note))
+
+
 
 # Achievements Routes
 @app.route('/achievements', methods=['GET'])
@@ -240,6 +386,15 @@ def add_achievement(current_user):
     mysql.connection.commit()
     return jsonify({'message': 'Achievement added successfully'}), 201
 
+@app.route('/achievements/<int:achievement_id>', methods=['DELETE'])
+@token_required
+def delete_achievement(current_user, achievement_id):
+    cursor = db_connection()
+    cursor.execute("DELETE FROM achievements WHERE id = %s AND user_id = %s", (achievement_id, current_user['id']))
+    mysql.connection.commit()
+    return jsonify({'message': 'Achievement deleted successfully'})
+
+
 # Logs Routes
 @app.route('/logs', methods=['GET'])
 @token_required
@@ -266,6 +421,15 @@ def add_log(current_user):
     ))
     mysql.connection.commit()
     return jsonify({'message': 'Log added successfully'}), 201
+
+@app.route('/logs/<int:log_id>', methods=['DELETE'])
+@token_required
+def delete_log(current_user, log_id):
+    cursor = db_connection()
+    cursor.execute("DELETE FROM logs WHERE id = %s AND user_id = %s", (log_id, current_user['id']))
+    mysql.connection.commit()
+    return jsonify({'message': 'Log deleted successfully'})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
