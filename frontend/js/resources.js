@@ -73,7 +73,10 @@ function addResource() {
 
     fetch('https://yourshahariar.pythonanywhere.com/resources', {
         method: 'POST',
-        headers: getAuthHeader(),
+        headers: {
+            ...getAuthHeader(),       // spread existing auth headers
+            'Content-Type': 'application/json'  // add this header
+        },
         body: JSON.stringify({
             title,
             type,
@@ -99,6 +102,7 @@ function addResource() {
         alert('Failed to add resource');
     });
 }
+
 
 function deleteResource(resourceId) {
     if (!confirm('Are you sure you want to delete this resource?')) return;
