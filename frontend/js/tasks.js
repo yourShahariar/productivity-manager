@@ -18,7 +18,7 @@ function loadTasks() {
     })
     .then(response => response.json())
     .then(tasks => {
-        // Clear existing tasks
+        // Clear existing lists
         document.getElementById('all-tasks-list').innerHTML = '';
         document.getElementById('pending-tasks-list').innerHTML = '';
         document.getElementById('in-progress-tasks-list').innerHTML = '';
@@ -35,20 +35,23 @@ function loadTasks() {
         tasks.forEach(task => {
             const taskCard = createTaskCard(task);
 
-            // Add to all tasks list
-            document.getElementById('all-tasks-list').appendChild(taskCard.cloneNode(true));
+            // Append to "All Tasks" list
+            document.getElementById('all-tasks-list').appendChild(taskCard);
 
-            // Add to status-specific list
+            // Append to status-specific list with NEW taskCard (so events still bind)
+            const statusCard = createTaskCard(task);
             if (task.status === 'pending') {
-                document.getElementById('pending-tasks-list').appendChild(taskCard.cloneNode(true));
+                document.getElementById('pending-tasks-list').appendChild(statusCard);
             } else if (task.status === 'in_progress') {
-                document.getElementById('in-progress-tasks-list').appendChild(taskCard.cloneNode(true));
+                document.getElementById('in-progress-tasks-list').appendChild(statusCard);
             } else if (task.status === 'completed') {
-                document.getElementById('completed-tasks-list').appendChild(taskCard.cloneNode(true));
+                document.getElementById('completed-tasks-list').appendChild(statusCard);
             }
         });
-    });
+    })
+    .catch(error => console.error('Error loading tasks:', error));
 }
+
 
 function createTaskCard(task) {
     const taskCard = document.createElement('div');
@@ -221,12 +224,14 @@ function deleteTask(taskId) {
 
     fetch(`https://yourshahariar.pythonanywhere.com/tasks/${taskId}`, {
         method: 'DELETE',
-        headers: getAuthHeader()
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeader()
+        }
     })
     .then(response => response.json())
     .then(data => {
         if (data.message === 'Task deleted successfully') {
-            // Reload tasks
             loadTasks();
         } else {
             alert('Failed to delete task');
