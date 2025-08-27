@@ -66,11 +66,11 @@ function viewNote(noteId) {
     fetch(`https://yourshahariar.pythonanywhere.com/notes/${noteId}`, {
         headers: getAuthHeader()
     })
-    .then(response => response.json())
-    .then(note => {
-        // Find the note in the array (response might be an array)
-        const noteData = Array.isArray(note) ? note.find(n => n.id == noteId) : note;
-
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to load note');
+        return response.json();
+    })
+    .then(noteData => {
         // Show note in a modal
         const modal = new bootstrap.Modal(document.createElement('div'));
         modal._element.className = 'modal fade';
@@ -104,6 +104,8 @@ function viewNote(noteId) {
         alert('Failed to load note');
     });
 }
+
+
 
 function addNote() {
     const title = document.getElementById('note-title').value;
