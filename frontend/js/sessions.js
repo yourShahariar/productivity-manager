@@ -1,31 +1,38 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Load sessions when sessions section is shown
     document.querySelector('[data-section="sessions"]').addEventListener('click', loadSessions);
-    
+
     // Add session button
     document.getElementById('save-session-btn').addEventListener('click', addSession);
-    
+
     // Set default date to today
     document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
-    
+
     // Load tasks for session form
     loadTasksForSession();
 });
 
 function loadSessions() {
-    fetch('http://localhost:5000/sessions', {
+    fetch('https://yourshahariar.pythonanywhere.com/sessions', {
         headers: getAuthHeader()
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`Server error: ${text}`);
+            });
+        }
+        return response.json();
+    })
     .then(sessions => {
         const sessionsList = document.getElementById('sessions-list');
         sessionsList.innerHTML = '';
-        
+
         if (sessions.length === 0) {
             sessionsList.innerHTML = '<div class="alert alert-info">No sessions recorded yet.</div>';
             return;
         }
-        
+
         // Group sessions by date
         const sessionsByDate = {};
         sessions.forEach(session => {
@@ -35,22 +42,22 @@ function loadSessions() {
             }
             sessionsByDate[date].push(session);
         });
-        
+
         // Sort dates in descending order
         const sortedDates = Object.keys(sessionsByDate).sort((a, b) => new Date(b) - new Date(a));
-        
+
         // Create session elements
         sortedDates.forEach(date => {
             const dateHeader = document.createElement('h4');
             dateHeader.className = 'mt-4 mb-3';
-            dateHeader.textContent = new Date(date).toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+            dateHeader.textContent = new Date(date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
             sessionsList.appendChild(dateHeader);
-            
+
             sessionsByDate[date].forEach(session => {
                 const sessionEl = document.createElement('div');
                 sessionEl.className = 'session-item';
@@ -65,26 +72,32 @@ function loadSessions() {
                     <p>${session.notes || ''}</p>
                     <button class="btn btn-sm btn-outline-danger delete-session" data-id="${session.id}">Delete</button>
                 `;
-                
+
                 sessionEl.querySelector('.delete-session').addEventListener('click', function() {
                     deleteSession(this.getAttribute('data-id'));
                 });
-                
+
                 sessionsList.appendChild(sessionEl);
             });
         });
+    })
+    .catch(error => {
+        console.error('Failed to load sessions:', error);
+        const sessionsList = document.getElementById('sessions-list');
+        sessionsList.innerHTML = '<div class="alert alert-danger">Failed to load sessions. Please try again later.</div>';
     });
 }
 
+
 function loadTasksForSession() {
-    fetch('http://localhost:5000/tasks', {
+    fetch('https://yourshahariar.pythonanywhere.com/tasks', {
         headers: getAuthHeader()
     })
     .then(response => response.json())
     .then(tasks => {
         const taskSelect = document.getElementById('session-task');
         taskSelect.innerHTML = '<option value="">Select Task</option>';
-        
+
         tasks.forEach(task => {
             const option = document.createElement('option');
             option.value = task.id;
@@ -100,13 +113,13 @@ function addSession() {
     const startTime = document.getElementById('session-start-time').value;
     const endTime = document.getElementById('session-end-time').value;
     const notes = document.getElementById('session-notes').value;
-    
+
     // Calculate duration in minutes
     const start = new Date(`2000-01-01T${startTime}`);
     const end = new Date(`2000-01-01T${endTime}`);
     const duration = (end - start) / (1000 * 60);
-    
-    fetch('http://localhost:5000/sessions', {
+
+    fetch('https://yourshahariar.pythonanywhere.com/sessions', {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({
@@ -124,7 +137,7 @@ function addSession() {
             // Close modal and reset form
             bootstrap.Modal.getInstance(document.getElementById('add-session-modal')).hide();
             document.getElementById('add-session-form').reset();
-            
+
             // Reload sessions
             loadSessions();
         } else {
@@ -139,8 +152,8 @@ function addSession() {
 
 function deleteSession(sessionId) {
     if (!confirm('Are you sure you want to delete this session?')) return;
-    
-    fetch(`http://localhost:5000/sessions/${sessionId}`, {
+
+    fetch(`https://yourshahariar.pythonanywhere.com/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: getAuthHeader()
     })
