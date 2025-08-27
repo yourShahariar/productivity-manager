@@ -156,16 +156,17 @@ def update_task(current_user, task_id):
 def delete_task(current_user, task_id):
     try:
         cursor = db_connection()
-        print(f"Cursor object: {cursor}")  # Check if cursor is not None or invalid
-        print(f"Deleting task id={task_id} for user id={current_user['id']}")
-
         cursor.execute("DELETE FROM tasks WHERE id = %s AND user_id = %s", (task_id, current_user['id']))
         mysql.connection.commit()
-        print("Delete query executed successfully")
+
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'Task not found or not authorized'}), 404
+
         return jsonify({'message': 'Task deleted successfully'})
     except Exception as e:
         print("Delete task error:", e)
         return jsonify({'message': 'Failed to delete task', 'error': str(e)}), 500
+
 
 
 
