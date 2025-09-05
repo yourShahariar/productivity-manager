@@ -12,6 +12,53 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTasksForSession();
 });
 
+
+function startCountdown(badgeEl, endTimeIso) {
+    let timer;
+
+    function updateCountdown() {
+        const now = new Date();
+        const endTime = new Date(endTimeIso);
+
+        // DEBUG: Check what times we're working with
+        console.log('Now:', now, 'End time:', endTime, 'ISO:', endTimeIso);
+
+        if (isNaN(endTime.getTime())) {
+            badgeEl.textContent = "Invalid time";
+            badgeEl.classList.remove("bg-primary");
+            badgeEl.classList.add("bg-warning");
+            clearInterval(timer);
+            return;
+        }
+
+        // Calculate difference correctly (both in UTC)
+        let diffMs = endTime.getTime() - now.getTime();
+
+        if (diffMs <= 0) {
+            badgeEl.textContent = "Expired";
+            badgeEl.classList.remove("bg-primary");
+            badgeEl.classList.add("bg-danger");
+            clearInterval(timer);
+            return;
+        }
+
+        const diffMinutes = Math.floor(diffMs / 60000);
+        const hours = Math.floor(diffMinutes / 60);
+        const minutes = diffMinutes % 60;
+
+        if (hours > 0) {
+            badgeEl.textContent = `${hours}h ${minutes}m left`;
+        } else {
+            badgeEl.textContent = `${minutes}m left`;
+        }
+    }
+
+    updateCountdown();
+    timer = setInterval(updateCountdown, 60000);
+}
+
+
+
 function loadSessions() {
     fetch('https://yourshahariar.pythonanywhere.com/sessions', {
         headers: getAuthHeader()
@@ -25,6 +72,7 @@ function loadSessions() {
         return response.json();
     })
     .then(sessions => {
+        console.log("Sessions data from backend:", sessions);
         const sessionsList = document.getElementById('sessions-list');
         sessionsList.innerHTML = '';
 
@@ -61,13 +109,18 @@ function loadSessions() {
             sessionsByDate[date].forEach(session => {
                 const sessionEl = document.createElement('div');
                 sessionEl.className = 'session-item';
+
+                // Format time display (just hours:minutes)
+                const startDisplay = session.start_time ? session.start_time.substring(0, 5) : 'null';
+                const endDisplay = session.end_time ? session.end_time.substring(0, 5) : 'null';
+
                 sessionEl.innerHTML = `
                     <div class="d-flex justify-content-between">
                         <h5>${session.task_title || 'General Session'}</h5>
-                        <span class="badge bg-primary">${session.duration_minutes} mins</span>
+                        <span class="badge bg-primary countdown">Loading...</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
-                        <span>${session.start_time} - ${session.end_time}</span>
+                        <span>${startDisplay} - ${endDisplay}</span>
                     </div>
                     <p>${session.notes || ''}</p>
                     <button class="btn btn-sm btn-outline-danger delete-session" data-id="${session.id}">Delete</button>
@@ -78,6 +131,16 @@ function loadSessions() {
                 });
 
                 sessionsList.appendChild(sessionEl);
+
+                // Start countdown if we have end time
+                const badge = sessionEl.querySelector('.countdown');
+                if (session.end_time_iso) {
+                    startCountdown(badge, session.end_time_iso);
+                } else {
+                    badge.textContent = "No end time";
+                    badge.classList.remove("bg-primary");
+                    badge.classList.add("bg-warning");
+                }
             });
         });
     })
@@ -171,3 +234,4 @@ function deleteSession(sessionId) {
         alert('Failed to delete session');
     });
 }
+
