@@ -4,10 +4,10 @@ from config import Config
 from models import mysql, init_db, db_connection, token_required
 import bcrypt
 import jwt
-import datetime
+from datetime import datetime as dt, date, time, timedelta, timezone
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='/static')
-CORS(app, resources={r"/*": {"origins": "https://yourshahariar.pythonanywhere.com"}})
+CORS(app, resources={r"/*": {"origins": "*"}})  # Changed to allow all origins for now
 app.config.from_object(Config)
 init_db(app)
 
@@ -65,7 +65,7 @@ def login():
 
     token = jwt.encode({
         'user_id': user['id'],
-        'exp': datetime.utcnow() + timedelta(hours=24)
+         'exp': dt.utcnow() + timedelta(hours=24)
     }, app.config['SECRET_KEY'])
 
     if isinstance(token, bytes):
@@ -221,42 +221,74 @@ def delete_resource(current_user, resource_id):
 
 
 # Sessions Routes
-from datetime import timedelta, date, time, datetime
 
 @app.route('/sessions', methods=['GET'])
 @token_required
 def get_sessions(current_user):
-    cursor = db_connection()
-    cursor.execute("""
-        SELECT s.*, t.title as task_title
-        FROM sessions s
-        LEFT JOIN tasks t ON s.task_id = t.id
-        WHERE s.user_id = %s
-    """, (current_user['id'],))
-    sessions = cursor.fetchall()
+    try:
+        cursor = db_connection()
+        cursor.execute("""
+            SELECT
+                s.id, s.user_id, s.task_id, s.session_date,
+                TIME_FORMAT(s.start_time, '%%H:%%i') as start_time,
+                TIME_FORMAT(s.end_time, '%%H:%%i') as end_time,
+                s.duration_minutes, s.notes,
+                t.title as task_title
+            FROM sessions s
+            LEFT JOIN tasks t ON s.task_id = t.id
+            WHERE s.user_id = %s
+        """, (current_user['id'],))
+        sessions = cursor.fetchall()
+        cursor.close()
 
-    serialized_sessions = []
-    for session in sessions:
-        session_dict = dict(session)  # Assumes cursor returns dict-like rows
+        serialized_sessions = []
 
-        # Convert any non-serializable fields to JSON-friendly format
-        for key, value in session_dict.items():
-            if isinstance(value, timedelta):
-                session_dict[key] = int(value.total_seconds() / 60)  # Convert timedelta to minutes (int)
-            elif isinstance(value, (date, time, datetime)):
-                session_dict[key] = value.isoformat()
-            elif value is None and key == 'duration_minutes':
-                session_dict[key] = 0  # Avoid null duration
+        for session in sessions:
+            session_dict = dict(session)
 
-        serialized_sessions.append(session_dict)
+            # Convert date to string if needed
+            if isinstance(session_dict.get('session_date'), date):
+                session_dict['session_date'] = session_dict['session_date'].isoformat()
 
-    return jsonify(serialized_sessions)
+            # Create ISO datetime for countdown - REMOVE THE "Z"
+            if session_dict.get('session_date') and session_dict.get('end_time'):
+                try:
+                    date_str = session_dict['session_date']
+                    time_str = session_dict['end_time']
+                    # CHANGE THIS LINE: Remove "Z" at the end
+                    session_dict['end_time_iso'] = f"{date_str}T{time_str}:00"  # No "Z"
+                except:
+                    session_dict['end_time_iso'] = None
+            else:
+                session_dict['end_time_iso'] = None
+
+            serialized_sessions.append(session_dict)
+
+        return jsonify(serialized_sessions)
+
+    except Exception as e:
+        print("Error in get_sessions:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+
+
 
 
 @app.route('/sessions', methods=['POST'])
 @token_required
 def add_session(current_user):
     data = request.get_json()
+
+    # Parse session_date
+    session_date = dt.fromisoformat(data['session_date']).date()
+
+    # Parse start_time / end_time
+    start_time_obj = dt.strptime(data['start_time'], "%H:%M").time()
+    end_time_obj = dt.strptime(data['end_time'], "%H:%M").time()
+
+    # Duration in minutes
+    duration = int((dt.combine(session_date, end_time_obj) - dt.combine(session_date, start_time_obj)).total_seconds() / 60)
+
     cursor = db_connection()
     cursor.execute("""
         INSERT INTO sessions
@@ -265,14 +297,21 @@ def add_session(current_user):
     """, (
         current_user['id'],
         data.get('task_id'),
-        data['session_date'],
-        data['start_time'],
-        data['end_time'],
-        data['duration_minutes'],
+        session_date,       # DATE column
+        start_time_obj,     # TIME column
+        end_time_obj,       # TIME column
+        duration,
         data.get('notes', '')
     ))
     mysql.connection.commit()
+    cursor.close()
+
     return jsonify({'message': 'Session added successfully'}), 201
+
+
+
+
+
 
 @app.route('/sessions/<int:session_id>', methods=['DELETE'])
 @token_required
@@ -283,6 +322,7 @@ def delete_session(current_user, session_id):
     if cursor.rowcount == 0:
         return jsonify({'message': 'Session not found or not authorized'}), 404
     return jsonify({'message': 'Session deleted successfully'})
+
 
 
 # Notes Routes
@@ -446,3 +486,5 @@ def debug_db():
         return "Database connection works!"
     except Exception as e:
         return f"Database connection failed: {str(e)}"
+if __name__ == '__main__':
+    app.run(debug=True)
